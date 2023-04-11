@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Optional;
+
 @Service
 public class UserService{
     @Resource
@@ -19,11 +21,15 @@ public class UserService{
         return userRepository.findAll();
     }
 
-    public User findById(Long id){
-        return userRepository.findById(id).get();
+    public Optional<User> findById(Long id){
+        return userRepository.findById(id);
     }
 
     public User findUser(String user, String password) {
         return userRepository.findUserByEmailAndPassword(user,password);
+    }
+
+    public void delete(User user) {
+        userRepository.delete(user);
     }
 }

@@ -113,7 +113,7 @@ public class CoordonatorController {
         List<PracticeDocument> response = new ArrayList<>();
         for (File document : practiceDocumentDTO.getFileList()) {
             PracticeDocument practiceDocument = new PracticeDocument(123L,
-                    userService.findById(practiceDocumentDTO.getUserId()), document.toURI().toURL().toString());
+                    userService.findById(practiceDocumentDTO.getUserId()).get(), document.toURI().toURL().toString());
             response.add(coordonatorService.savePracticeDocument(practiceDocument));
         }
         return ResponseEntity.ok(response);

@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +37,18 @@ public class AdminService {
         this.globalDetailsRepository = globalDetailsRepository;
         this.adminAnnouncementRepository = adminAnnouncementRepository;
         this.studentRepository = studentRepository;
+    }
+
+    public void saveAccount(User user){
+        userRepository.save(user);
+    }
+
+    public void updateAccount(User user){
+        User userFound = userRepository.findUserByEmail(user.getEmail());
+        if(userRepository.findById(user.getId()).isPresent()){ // if the user already exists
+            userRepository.delete(user);
+        }
+        userRepository.save(user);
     }
 
     public List<User> processExcel(MultipartFile file) throws IOException {
@@ -122,8 +135,4 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-
-    public List<User> getAdminContacts() {
-        return userRepository.findAllUsers();
-    }
 }

@@ -23,6 +23,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static com.example.licenta.model.AdminAnnouncementType.LICENTA;
 import static com.example.licenta.model.AdminAnnouncementType.STAGIU;
@@ -33,6 +34,9 @@ import static org.springframework.http.ResponseEntity.*;
 @CrossOrigin(origins = "*")
 public class AdminController {
 
+    @Resource
+    EmailService emailService;
+
     private final AdminService adminService;
     private final UserService userService;
 
@@ -40,11 +44,53 @@ public class AdminController {
         this.adminService = adminService;
         this.userService = userService;
     }
-    @Resource
-    EmailService emailService;
+
+    @GetMapping("/get-accounts")
+    public ResponseEntity<?> findAllUsers() {
+        return new ResponseEntity<>(userService.findAll(), HttpStatus.OK);
+    }
+
+    @PostMapping("/save-account")
+    public ResponseEntity<?> saveAccount(@RequestBody User user) {
+        try{
+            adminService.saveAccount(user);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Eroare la datele pentru user!");
+        }
+    }
+
+    @PutMapping("/update-account/{id}")
+    public ResponseEntity<?> updateAccount(@PathVariable Long id, @RequestBody User updatedUser) {
+        Optional<User> userFound = userService.findById(id);
+        if (userFound.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        User user = userFound.get();
+        user.setFirstName(updatedUser.getFirstName());
+        user.setLastName(updatedUser.getLastName());
+        user.setRole(updatedUser.getRole());
+        user.setEmail(updatedUser.getEmail());
+        user.setPassword(updatedUser.getPassword());
+
+        User savedUser = userService.save(user);
+        return ResponseEntity.ok(savedUser);
+    }
+
+    @DeleteMapping("delete/{id}")
+    @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.DELETE })
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        Optional<User> userOptional = userService.findById(id);
+        if (userOptional.isPresent()) {
+            userService.delete(userOptional.get());
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/email/{email}/{subject}/{message}")
     public ResponseEntity<?> sendEmail(@PathVariable String email,@PathVariable String subject,@PathVariable String message){
-
         emailService.sendSimpleMessage(email,subject, message);
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -59,7 +105,6 @@ public class AdminController {
                 for (var u : users) {
                     userService.save(u);
                 }
-
                 message = "Uploaded the file successfully: " + file.getOriginalFilename() + ". Processed "
                         + users.size() + " entries.";
                 return ResponseEntity.status(HttpStatus.OK).body(message);
@@ -76,7 +121,6 @@ public class AdminController {
         if (studentId <= 0) {
             notFound();
         }
-
         try {
             return ok(adminService.getStudentStatus(studentId));
         } catch (GeneralAdminException e) {
@@ -154,12 +198,6 @@ public class AdminController {
 
     @GetMapping("/grades")
     public ResponseEntity<?> getStudentsGrades() {
-
         return new ResponseEntity<>(adminService.getStudentsGrades(), HttpStatus.OK);
-    }
-
-    @GetMapping("/contacts")
-    public ResponseEntity<?> getContacts() {
-        return new ResponseEntity<>(adminService.getAdminContacts(), HttpStatus.OK);
     }
 }
